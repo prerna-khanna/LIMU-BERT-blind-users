@@ -276,12 +276,12 @@ class Preprocess4Normalization(Pipeline):
 
     def __call__(self, instance):
         instance_new = instance.copy()[:, :self.feature_len]
-        if instance_new.shape[1] >= 6 and self.norm_acc:
+        '''if instance_new.shape[1] >= 6 and self.norm_acc:
             instance_new[:, :3] = instance_new[:, :3] / self.acc_norm
         if instance_new.shape[1] == 9 and self.norm_mag:
             mag_norms = np.linalg.norm(instance_new[:, 6:9], axis=1) + self.eps
             mag_norms = np.repeat(mag_norms.reshape(mag_norms.size, 1), 3, axis=1)
-            instance_new[:, 6:9] = instance_new[:, 6:9] / mag_norms * self.gamma
+            instance_new[:, 6:9] = instance_new[:, 6:9] / mag_norms * self.gamma'''
         return instance_new
 
 
@@ -343,7 +343,7 @@ class IMUDataset(Dataset):
     def __init__(self, data, labels, pipeline=[]):
         super().__init__()
         self.pipeline = pipeline
-        self.data = data
+        self.data = data[:, :, 3:6]  # Only use the gyro data
         self.labels = labels
 
     def __getitem__(self, index):

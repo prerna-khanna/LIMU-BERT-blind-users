@@ -33,7 +33,13 @@ def detect_nucleus(energy, window=20, nucleus_thres=0.4):
         change_pts = []
 
         # Convert each sequence to a list of scalars (optional if already 1D)
-        sequence_energy = sequence_energy.cpu().numpy() if sequence_energy.is_cuda else sequence_energy.numpy()
+        if sequence_energy.is_cuda:
+            sequence_energy = sequence_energy.cpu().numpy()
+        elif sequence_energy.device.type == 'mps':  # Check if the tensor is on MPS
+            sequence_energy = sequence_energy.to('cpu').numpy()
+        else:
+            sequence_energy = sequence_energy.numpy()
+
 
         # Sliding window to detect energy changes
         for i in range(len(sequence_energy) - 15):
@@ -68,6 +74,6 @@ def detect_nucleus(energy, window=20, nucleus_thres=0.4):
 
 def calculate_significant_axis(seqs):
     # Calculate the axis with maximum rotational activity (x=0, y=1, z=2)
-    abs_rotations = torch.abs(seqs[:, :, 3:6])  # Assumes last three features are rotations
+    abs_rotations = torch.abs(seqs[:, :, :])  # Assumes last three features are rotations
     sig_axis = abs_rotations.mean(dim=1).argmax(dim=-1)  # Shape: (batch_size,)
     return sig_axis
