@@ -255,14 +255,18 @@ class ClassifierLSTM(nn.Module):
 
 class ClassifierGRU(nn.Module):
     def __init__(self, cfg, input=None, output=None, feats=False):
+        
         super().__init__()
         for i in range(cfg.num_rnn):
             if input is not None and i == 0:
                 self.__setattr__('gru' + str(i), nn.GRU(input, cfg.rnn_io[i][1], num_layers=cfg.num_layers[i], batch_first=True))
+            
             else:
+                # Dynamically set the input size of the subsequent GRU layers
+                input_dim = cfg.rnn_io[i][0] if i == 0 else cfg.rnn_io[i-1][1]
                 self.__setattr__('gru' + str(i),
-                                 nn.GRU(cfg.rnn_io[i][0], cfg.rnn_io[i][1], num_layers=cfg.num_layers[i],
-                                         batch_first=True))
+                                nn.GRU(input_dim, cfg.rnn_io[i][1], num_layers=cfg.num_layers[i], batch_first=True))
+                
         for i in range(cfg.num_linear):
             if output is not None and i == cfg.num_linear - 1:
                 self.__setattr__('lin' + str(i), nn.Linear(cfg.linear_io[i][0], output))
@@ -277,6 +281,8 @@ class ClassifierGRU(nn.Module):
         h = input_seqs
         for i in range(self.num_rnn):
             rnn = self.__getattr__('gru' + str(i))
+            #print(f"Input shape to RNN: {input_seqs.shape}")
+            
             h, _ = rnn(h)
             if self.activ:
                 h = F.relu(h)
@@ -610,7 +616,7 @@ def fetch_classifier(method, model_cfg, input=None, output=None, feats=False):
     if 'lstm' in method:
         model = ClassifierLSTM(model_cfg, input=input, output=output)
     elif 'gru' in method:
-        model = ClassifierGRU(model_cfg, input=input, output=output)
+        model = ClassifierGRU(model_cfg, input=3, output=output)
     elif 'dcnn' in method:
         model = BenchmarkDCNN(model_cfg, input=input, output=output)
     elif 'cnn2' in method:
