@@ -343,7 +343,7 @@ class IMUDataset(Dataset):
     def __init__(self, data, labels, pipeline=[]):
         super().__init__()
         self.pipeline = pipeline
-        self.data = data[:, :, 3:6]  # Only use the gyro data
+        self.data = data[:, :, :3]  # Only use the gyro data
         self.labels = labels
 
     def __getitem__(self, index):
